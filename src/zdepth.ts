@@ -15,19 +15,19 @@ export class ZDepth {
         this.input = new Input(document.getElementById("canvas")!);
     }
 
-    write(x: number, y: number, triangle: Triangle) {
-        const sortedTringle = triangle.clone().ySort();
-        Math.floor((sortedTringle.p0z - sortedTringle.p2z) + sortedTringle.p0z)
+    write(x: number, y: number, z: number) {
+        if (this.mask(x, y, z)) {
+            this.depthIMage[x][y] = z;
+        }
     }
 
     mask(x: number, y: number, z: number) {
-        return this.depthIMage[x][y] < z;
+        return this.depthIMage[x][y] > z;
     }
 
-    reset() {
+    clear() {
         for (let i = 0; i < 800; i++) {
-            this.depthIMage[i] = new Array(600);
-            this.depthIMage[i].fill(0);
+            this.depthIMage[i].fill(Infinity);
         }
     }
 }

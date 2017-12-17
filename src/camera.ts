@@ -3,7 +3,7 @@ import Matrix = mathjs.Matrix;
 import {GameMatrix} from "./gameMatrix";
 
 export class Camera {
-    private pos: Matrix;
+    public pos: Matrix;
 
     constructor() {
         this.pos = math.matrix([0, 0, 0, 1]);
@@ -17,6 +17,7 @@ export class Camera {
 
         const ax = Math.atan2(targetY, xzDistance);
         const ay = Math.atan2(targetX, targetZ);
+        return {x: ax, y: ay, z: 0};
     }
 
     move(t: { x: number, y: number, z: number }) {

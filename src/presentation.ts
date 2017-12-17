@@ -2,9 +2,13 @@ import math = require("mathjs");
 import Matrix = mathjs.Matrix;
 import {Triangle} from "./triangle";
 import {Camera} from "./camera";
+import {GameMatrix} from "./gameMatrix";
+import {touchOptionsArray} from "shelljs";
+import {ZDepth} from "./zdepth";
 
 export class Presentation {
     private context: CanvasRenderingContext2D;
+    private zDepth: ZDepth;
     private camera: Camera;
 
     init() {
@@ -12,6 +16,7 @@ export class Presentation {
         const canvas = document.getElementById("canvas") as HTMLCanvasElement;
         this.context = canvas.getContext("2d")!;
         this.clear();
+        this.zDepth = new ZDepth();
     }
 
     clear() {
@@ -23,8 +28,13 @@ export class Presentation {
     }
 
 
+    update() {
+        this.zDepth.clear();
+    }
     draw(inTriangle: Triangle, color: string) {
         let triangle = inTriangle.clone();
+
+        triangle = Presentation.viewTransform(triangle);
 
         this.context.fillStyle = color;
         this.context.beginPath();
@@ -34,7 +44,30 @@ export class Presentation {
         this.context.fill();
     }
 
-    viewTransform() {
+    private const = 0;
+
+    private static prespective(inTriangle: Triangle) {
+        let triangle = inTriangle.clone();
+        triangle.p0x = triangle.p0x / triangle.p0z;
+        triangle.p0y = triangle.p0y / triangle.p0z;
+        triangle.p1x = triangle.p1x / triangle.p1z;
+        triangle.p1y = triangle.p1y / triangle.p1z;
+        triangle.p2x = triangle.p2x / triangle.p2z;
+        triangle.p2y = triangle.p2y / triangle.p2z;
+        return triangle;
+
+    }
+
+    private static viewTransform(inTriangle: Triangle) {
+        let triangle = inTriangle.clone();
+        //triangle = Presentation.prespective(triangle);
+
+        //this.const++;
+        //const target = {x:0, y: 0, z:0};
+        //const {x, y} = this.camera.toFace(target);
+        //triangle.points = GameMatrix.rotateX(triangle.points, x, {x: 0, y: 0, z: 0});
+        //triangle.points = GameMatrix.rotateY(triangle.points, y, {x: 0, y: 0, z: 0});
+        return triangle;
     }
 
     //ピクセル単位で実行
@@ -62,12 +95,33 @@ export class Presentation {
     }
 
     rasterise(triangle: Triangle) {
-        this.context.fillStyle = "rgb(0, 255, 0)";
-        this.context.beginPath();
         Presentation.progressInPixilUnit(triangle, (x, y) => {
-            this.context.rect(x, y, 1, 1);
+            //重心座標系
+            //http://tkengo.github.io/blog/2015/01/17/opengl-es-2-2d-knowledge-4/
+            let area: number[] = new Array(3);
+            for (let i = 0; i < 3; i++) {
+                const currPoint = i;
+                const nextPoint = i != 2 ? i + 1 : 0;
+                const a = Math.hypot(
+                    triangle.getPos(currPoint, "x") - triangle.getPos(nextPoint, "x"),
+                    triangle.getPos(currPoint, "y") - triangle.getPos(nextPoint, "y"));
+                const b = Math.hypot(
+                    x - triangle.getPos(nextPoint, "x"),
+                    y - triangle.getPos(nextPoint, "y"));
+                const c = Math.hypot(
+                    x - triangle.getPos(currPoint, "x"),
+                    y - triangle.getPos(currPoint, "y"));
+                const angle = Math.acos((a * a + b * b - c * c) / (2 * a * b));
+                area[i] = Math.sin(angle) * a * b / 2;
+            }
+            const allArea = area.reduce((a, b) => a + b);
+            const z = (area[2] / allArea) * triangle.p0z
+                + (area[1] / allArea) * triangle.p1z
+                + (area[0] / allArea) * triangle.p2z;
+            if (this.zDepth.mask(x, y, z)) {
+                this.context.rect(x, y, 1, 1);
+            }
+            this.zDepth.write(x, y, z);
         });
-        this.context.closePath();
-        this.context.fill();
     }
 }

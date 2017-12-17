@@ -89,6 +89,20 @@ export class Triangle {
         return [this.p2x, this.p2y, this.p2z];
     }
 
+    getPos(num: number, coord: "x" | "y" | "z") {
+        let coordNum: number;
+        if (coord == "x") {
+            coordNum = 0;
+        } else if (coord == "y") {
+            coordNum = 1;
+        } else if (coord == "z") {
+            coordNum = 2;
+        } else {
+            return new Error("ありえない");
+        }
+        return this.points.get([coordNum, num]);
+    }
+
     clone() {
         return new Triangle(this.p0, this.p1, this.p2);
     }
@@ -148,7 +162,7 @@ export class Triangle {
     }
 
     //重心の座標を返す
-    private center() {
+    center() {
         return {
             x: (this.points.get([0, 0]) + this.points.get([0, 1]) + this.points.get([0, 2])) / 3,
             y: (this.points.get([1, 0]) + this.points.get([1, 1]) + this.points.get([1, 2])) / 3,

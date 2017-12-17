@@ -25,10 +25,11 @@ export class Game {
     loop() {
         this.controller.update();
         this.view.clear();
+        this.view.update();
 
         this.gameManager.update();
         setTimeout(() => {
             this.loop()
-        }, 16 / 1000);
+        }, 1000 / 30);
     }
 }
