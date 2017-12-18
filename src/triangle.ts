@@ -1,39 +1,22 @@
 import math = require("mathjs");
 import Matrix = mathjs.Matrix;
 import {GameMatrix} from "./gameMatrix";
+import {Point4} from "./point";
 
 export class Triangle {
-    points: Point3[];
+    points: Point4[];
 
-
-    getPos(num: number, coord: "x" | "y" | "z") {
-        let coordNum: number;
-        if (coord == "x") {
-            coordNum = 0;
-        } else if (coord == "y") {
-            coordNum = 1;
-        } else if (coord == "z") {
-            coordNum = 2;
-        } else {
-            return new Error("ありえない");
-        }
-        return this.points.get([coordNum, num]);
-    }
 
     clone() {
-        return new Triangle(this.p0, this.p1, this.p2);
+        return new Triangle(this.points[0], this.points[1], this.points[2]);
     }
 
-    constructor(p1: number[], p2: number[], p3: number[]) {
-        if (p1.length != 3 || p2.length != 3 || p3.length != 3) {
-            throw new Error("エラー");
-        }
-        this.points = math.matrix([
-            [p1[0], p2[0], p3[0]],
-            [p1[1], p2[1], p3[1]],
-            [p1[2], p2[2], p3[2]],
-            [1, 1, 1],
-        ]);
+    constructor(p0: Point4, p1: Point4, p2: Point4) {
+        this.points = [
+            p0.clone(),
+            p1.clone(),
+            p2.clone(),
+        ];
     }
 
 
@@ -42,14 +25,15 @@ export class Triangle {
     //p1とp2がx軸と並行
     //入力はy軸でソート済みでなければならない
     twinSplit() {
-        const q = [
-            this.p0x + (this.p1y - this.p0y) / (this.p2y - this.p0y) * (this.p2x - this.p0x),
-            this.p1y,
+        const q = new Point4(
+            this.points[0].x + (this.points[1].y - this.points[0].y) / (this.points[2].y - this.points[0].y) * (this.points[2].x - this.points[0].x),
+            this.points[1].y,
             0
-        ];
+        );
         return [
-            new Triangle(this.p0, this.p1, q),
-            new Triangle(this.p2, this.p1, q)];
+            new Triangle(this.points[0], this.points[1], q),
+            new Triangle(this.points[2], this.points[1], q)
+        ];
     }
 
     //matrixのy軸でのソート
@@ -58,16 +42,16 @@ export class Triangle {
             let isSwap = false;
             //三角形の座標の数は3つ
             for (let i = 0; i < 3 - 1; i++) {
-                if (this.points.get([1, i]) > this.points.get([1, i + 1])) {
-                    const tempX = this.points.get([0, i + 1]);
-                    const tempY = this.points.get([1, i + 1]);
-                    const tempZ = this.points.get([2, i + 1]);
-                    this.points.set([0, i + 1], this.points.get([0, i]));
-                    this.points.set([1, i + 1], this.points.get([1, i]));
-                    this.points.set([2, i + 1], this.points.get([2, i]));
-                    this.points.set([0, i], tempX);
-                    this.points.set([1, i], tempY);
-                    this.points.set([2, i], tempZ);
+                if (this.points[i].y > this.points[i + 1].y) {
+                    const tempX = this.points[i + 1].x;
+                    const tempY = this.points[i + 1].y;
+                    const tempZ = this.points[i + 1].z;
+                    this.points[i + 1].x = this.points[i].x;
+                    this.points[i + 1].y = this.points[i].y;
+                    this.points[i + 1].z = this.points[i].z;
+                    this.points[i].x = tempX;
+                    this.points[i].y = tempY;
+                    this.points[i].z = tempZ;
                     isSwap = true;
                 }
             }
@@ -81,9 +65,9 @@ export class Triangle {
     //重心の座標を返す
     center() {
         return {
-            x: (this.points.get([0, 0]) + this.points.get([0, 1]) + this.points.get([0, 2])) / 3,
-            y: (this.points.get([1, 0]) + this.points.get([1, 1]) + this.points.get([1, 2])) / 3,
-            z: (this.points.get([2, 0]) + this.points.get([2, 1]) + this.points.get([2, 2])) / 3,
+            x: (this.points[0].x + this.points[1].x + this.points[2].x) / 3,
+            y: (this.points[0].y + this.points[1].y + this.points[2].y) / 3,
+            z: (this.points[0].z + this.points[1].z + this.points[2].z) / 3,
         };
     }
 
@@ -92,7 +76,7 @@ export class Triangle {
      * @param t 移動距離
      */
     transform(t: { x: number, y: number, z: number }) {
-        this.points = GameMatrix.transform(this.points, t);
+        this.points.forEach((e)=>e.transform(t));
     }
 
     /**
@@ -101,7 +85,7 @@ export class Triangle {
      * @param axis ここを原点とする
      */
     scale(scale: { sx: number, sy: number, sz: number }, axis: { x: number, y: number, z: number } = this.center()) {
-        this.points = GameMatrix.scale(this.points, scale, axis);
+        this.points.forEach((e)=>e.scale(scale, axis));
     }
 
     /**
@@ -110,7 +94,7 @@ export class Triangle {
      * @param axis ここを原点とする
      */
     rotateX(x: number, axis: { x: number, y: number, z: number } = this.center()) {
-        this.points = GameMatrix.rotateX(this.points, x, axis);
+        this.points.forEach((e)=>e.rotateX(x, axis));
     }
 
     /**
@@ -119,6 +103,6 @@ export class Triangle {
      * @param axis ここを原点とする
      */
     rotateY(y: number, axis: { x: number, y: number, z: number } = this.center()) {
-        this.points = GameMatrix.rotateY(this.points, y, axis);
+        this.points.forEach((e)=>e.rotateY(y, axis));
     }
 }

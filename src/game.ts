@@ -30,6 +30,6 @@ export class Game {
         this.gameManager.update();
         setTimeout(() => {
             this.loop()
-        }, 1000 / 30);
+        }, 1000 / 20);
     }
 }

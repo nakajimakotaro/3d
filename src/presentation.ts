@@ -48,12 +48,12 @@ export class Presentation {
 
     private static prespective(inTriangle: Triangle) {
         let triangle = inTriangle.clone();
-        triangle.p0x = triangle.p0x / triangle.p0z;
-        triangle.p0y = triangle.p0y / triangle.p0z;
-        triangle.p1x = triangle.p1x / triangle.p1z;
-        triangle.p1y = triangle.p1y / triangle.p1z;
-        triangle.p2x = triangle.p2x / triangle.p2z;
-        triangle.p2y = triangle.p2y / triangle.p2z;
+        triangle.points[0].x = triangle.points[0].x / triangle.points[0].z;
+        triangle.points[0].y = triangle.points[0].y / triangle.points[0].z;
+        triangle.points[1].x = triangle.points[1].x / triangle.points[1].z;
+        triangle.points[1].y = triangle.points[1].y / triangle.points[1].z;
+        triangle.points[2].x = triangle.points[2].x / triangle.points[2].z;
+        triangle.points[2].y = triangle.points[2].y / triangle.points[2].z;
         return triangle;
 
     }
@@ -62,7 +62,6 @@ export class Presentation {
         let triangle = inTriangle.clone();
         //triangle = Presentation.prespective(triangle);
 
-        //this.const++;
         //const target = {x:0, y: 0, z:0};
         //const {x, y} = this.camera.toFace(target);
         //triangle.points = GameMatrix.rotateX(triangle.points, x, {x: 0, y: 0, z: 0});
@@ -74,16 +73,16 @@ export class Presentation {
     static progressInPixilUnit(inTriangle: Triangle, progressFunc: (x: number, y: number) => void) {
         const twinTriangle = inTriangle.clone().ySort().twinSplit();
         for (let i = 0; i < 2; i++) {
-            const bottom = Math.floor(Math.max(twinTriangle[i].p0y, twinTriangle[i].p1y));
-            const top = Math.floor(Math.min(twinTriangle[i].p0y, twinTriangle[i].p1y));
+            const bottom = Math.floor(Math.max(twinTriangle[i].points[0].y, twinTriangle[i].points[1].y));
+            const top = Math.floor(Math.min(twinTriangle[i].points[0].y, twinTriangle[i].points[1].y));
             for (let y = top; y < bottom; y++) {
-                const p1x = twinTriangle[i].p0x;
-                const p1y = twinTriangle[i].p0y;
+                const p1x = twinTriangle[i].points[0].x;
+                const p1y = twinTriangle[i].points[0].y;
                 //y軸は同じ
-                const parallelp1x = Math.min(twinTriangle[i].p1x, twinTriangle[i].p2x);
-                const parallelp1y = twinTriangle[i].p1y;
-                const parallelp2x = Math.max(twinTriangle[i].p1x, twinTriangle[i].p2x);
-                const parallelp2y = twinTriangle[i].p2y;
+                const parallelp1x = Math.min(twinTriangle[i].points[1].x, twinTriangle[i].points[2].x);
+                const parallelp1y = twinTriangle[i].points[1].y;
+                const parallelp2x = Math.max(twinTriangle[i].points[1].x, twinTriangle[i].points[2].x);
+                const parallelp2y = twinTriangle[i].points[2].y;
 
                 const q1x = Math.floor(p1x - (p1y - y) / (p1y - parallelp1y) * (p1x - parallelp1x));
                 const q2x = Math.floor(p1x - (p1y - y) / (p1y - parallelp2y) * (p1x - parallelp2x));
@@ -103,21 +102,21 @@ export class Presentation {
                 const currPoint = i;
                 const nextPoint = i != 2 ? i + 1 : 0;
                 const a = Math.hypot(
-                    triangle.getPos(currPoint, "x") - triangle.getPos(nextPoint, "x"),
-                    triangle.getPos(currPoint, "y") - triangle.getPos(nextPoint, "y"));
+                    triangle.points[currPoint].x - triangle.points[nextPoint].x,
+                    triangle.points[currPoint].y - triangle.points[nextPoint].y);
                 const b = Math.hypot(
-                    x - triangle.getPos(nextPoint, "x"),
-                    y - triangle.getPos(nextPoint, "y"));
+                    x - triangle.points[nextPoint].x,
+                    y - triangle.points[nextPoint].y);
                 const c = Math.hypot(
-                    x - triangle.getPos(currPoint, "x"),
-                    y - triangle.getPos(currPoint, "y"));
+                    x - triangle.points[currPoint].x,
+                    y - triangle.points[currPoint].y);
                 const angle = Math.acos((a * a + b * b - c * c) / (2 * a * b));
                 area[i] = Math.sin(angle) * a * b / 2;
             }
             const allArea = area.reduce((a, b) => a + b);
-            const z = (area[2] / allArea) * triangle.p0z
-                + (area[1] / allArea) * triangle.p1z
-                + (area[0] / allArea) * triangle.p2z;
+            const z = (area[2] / allArea) * triangle.points[0].z
+                + (area[1] / allArea) * triangle.points[1].z
+                + (area[0] / allArea) * triangle.points[2].z;
             if (this.zDepth.mask(x, y, z)) {
                 this.context.rect(x, y, 1, 1);
             }

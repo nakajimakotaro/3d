@@ -1,18 +1,19 @@
 import math = require("mathjs");
 import Matrix = mathjs.Matrix;
 import {GameMatrix} from "./gameMatrix";
+import {Point4} from "./point";
 
 export class Camera {
-    public pos: Matrix;
+    public point: Point4;
 
     constructor() {
-        this.pos = math.matrix([0, 0, 0, 1]);
+        this.point = new Point4(0, 0, 0, 1);
     }
 
-    toFace(target: { x: number, y: number, z: number }) {
-        const targetX = target.x - this.pos.get([0]);
-        const targetY = target.y - this.pos.get([1]);
-        const targetZ = target.z - this.pos.get([2]);
+    toFace(point:Point4) {
+        const targetX = point.x - this.point[0].x;
+        const targetY = point.y - this.point[1].y;
+        const targetZ = point.z - this.point[2].z;
         const xzDistance = Math.sqrt(targetX * targetX + targetZ * targetZ);
 
         const ax = Math.atan2(targetY, xzDistance);
@@ -21,6 +22,6 @@ export class Camera {
     }
 
     move(t: { x: number, y: number, z: number }) {
-        this.pos = GameMatrix.transform(this.pos, t);
+        this.point.transform(t);
     }
 }
